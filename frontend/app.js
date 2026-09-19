@@ -137,7 +137,7 @@ async function api(p,b){const r=await fetch(p,{method:b?'POST':'GET',headers:{'C
 window.showScreen=function(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');};
 window.goOnline=function(){showScreen('online-screen');};
 window.switchTab=function(t,el){document.querySelectorAll('.lobby-tab').forEach(b=>b.classList.remove('active'));(el||document.querySelector('.lobby-tab')).classList.add('active');$('tab-create').style.display=t==='create'?'block':'none';$('tab-join').style.display=t==='join'?'block':'none';};
-window.startGame=function(mode){gameMode=mode;chess=new Chess();selSq=null;lastMove=null;evalHistory=[];moveAnns=[];analSeq++;drawViewKey=null;if(draw.active)drawCancel();document.querySelectorAll('.sq-ann').forEach(e=>e.remove());navReset();
+window.startGame=function(mode){gameMode=mode;chess=new Chess();selSq=null;lastMove=null;evalHistory=[];moveAnns=[];analSeq++;lastGameOverKey=null;drawViewKey=null;if(draw.active)drawCancel();document.querySelectorAll('.sq-ann').forEach(e=>e.remove());navReset();
 const badge=$('mode-badge');
 if(mode==='online'){badge.className='topbar-badge badge-online';badge.textContent='En ligne';}
 else if(mode==='ai'){badge.className='topbar-badge badge-ai-t';badge.textContent='vs Stockfish doux';}
@@ -253,8 +253,11 @@ else if(chess.in_check())t='⚠ '+(chess.turn()==='w'?'Blancs':'Noirs')+' — É
 $('status-msg').textContent=t;
 try{$('status-white').textContent=chess.turn()==='w'?'À vous de jouer':'En attente…';
 $('status-black').textContent=chess.turn()==='b'?'À vous de jouer':'En attente…';}catch{}
-try{if(gameMode!=='editor'&&chess.game_over())showGameOver();}catch{}}
-function updateEvalBar(){const last=evalHistory[evalHistory.length-1];const cp=last?last.after:20;const pct=50+Math.max(-47,Math.min(47,cp/1500*47));$('eval-bar').style.width=pct+'%';$('eval-num').textContent=(cp/100).toFixed(1);}
+try{if(gameMode!=='editor'&&chess.game_over())maybeShowGameOver();}catch{}}
+let lastGameOverKey=null;
+function maybeShowGameOver(){let key=null;try{key=chess.fen();}catch{return;}
+if(key===lastGameOverKey)return;showGameOver();lastGameOverKey=key;}
+function updateEvalBar(){const last=evalHistory[evalHistory.length-1];const cp=last?last.after:0;const pct=50+Math.max(-47,Math.min(47,cp/1500*47));$('eval-bar').style.width=pct+'%';$('eval-num').textContent=(cp/100).toFixed(1);}
 // ---------- Coups ----------
 async function onSqClick(sq){if(suppressClick){suppressClick=false;return;}
 if(gameMode==='editor')return edClick(sq);
@@ -392,7 +395,8 @@ window.exportPGN=function(){try{navigator.clipboard.writeText(chess.pgn());}catc
 window.exportFEN=function(){try{navigator.clipboard.writeText(chess.fen());}catch{}$('fen-in').value=chess.fen();};
 window.loadFenBox=function(){try{chess=new Chess($('fen-in').value.trim());lastMove=null;analSeq++;updateAll();toast('Position FEN chargée',true);}catch{toast('FEN invalide',false);}};
 window.downloadPGN=function(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([chess.pgn()],{type:'text/plain'}));a.download='partie.pgn';a.click();};
-window.undoLast=function(){const u1=chess.undo();if(u1){moveAnns.pop();evalHistory.pop();}if(gameMode==='ai'){const u2=chess.undo();if(u2){moveAnns.pop();evalHistory.pop();}}const h=chess.history({verbose:true});lastMove=h.length?{from:h[h.length-1].from,to:h[h.length-1].to}:null;analSeq++;document.querySelectorAll('.sq-ann').forEach(e=>e.remove());updateAll();addChatMsg('Coup annulé.');};
+function resetAnalysisPane(){const pv=$('pv-list');if(pv)pv.innerHTML='';const ab=$('analysis-body');if(ab)ab.textContent='Faites votre premier coup pour recevoir l analyse IA…';}
+window.undoLast=function(){if(gameMode==='online'){toast('Annuler indisponible en ligne (partie synchronisée)',false);return;}const u1=chess.undo();if(u1){moveAnns.pop();evalHistory.pop();}if(gameMode==='ai'){const u2=chess.undo();if(u2){moveAnns.pop();evalHistory.pop();}}const h=chess.history({verbose:true});lastMove=h.length?{from:h[h.length-1].from,to:h[h.length-1].to}:null;analSeq++;document.querySelectorAll('.sq-ann').forEach(e=>e.remove());resetAnalysisPane();updateAll();addChatMsg('Coup annulé.');};
 // ---------- Promo / fin ----------
 function showPromo(){return new Promise(res=>{const ov=$('promo-overlay'),ch=$('promo-choices');ch.innerHTML='';['q','r','b','n'].forEach(p=>{const b=document.createElement('button');b.className='g-btn';b.style.fontSize='2rem';b.textContent={q:'♕',r:'♖',b:'♗',n:'♘'}[p];b.onclick=()=>{ov.classList.remove('open');res(p);};ch.appendChild(b);});ov.classList.add('open');});}
 function showGameOver(i,t,s){$('go-icon').textContent=i||'♛';$('go-title').textContent=t||'Partie terminée';$('go-sub').textContent=s||chess.pgn().slice(-60);$('gameover-overlay').classList.add('open');}
@@ -443,7 +447,8 @@ window.edClearBoard=function(){edBoard=new Chess('8/8/8/8/8/8/8/8 w - - 0 1');ch
 let wsQueue=[];
 function wsSend(o){const s=JSON.stringify(o);if(ws&&ws.readyState===1){try{ws.send(s);return true;}catch{}}wsQueue.push(s);wsConnect();return false;}
 function initOnlineClocks(time){const s=parseInt(time)||0;clocks={w:s||null,b:s||null,inc:0};renderClocks();startClock();}
-function wsConnect(){if(ws&&(ws.readyState===1||ws.readyState===0))return ws;wsQueue=wsQueue||[];try{ws=new WebSocket('ws://127.0.0.1:3000/online');}catch{toast('Serveur injoignable — lance start-backend.bat',false);return null;}
+function wsUrl(){try{const h=location.hostname||'127.0.0.1';const p=location.port||'3000';return 'ws://'+h+':'+p+'/online';}catch{return 'ws://127.0.0.1:3000/online';}}
+function wsConnect(){if(ws&&(ws.readyState===1||ws.readyState===0))return ws;wsQueue=wsQueue||[];try{ws=new WebSocket(wsUrl());}catch{toast('Serveur injoignable — lance start-backend.bat',false);return null;}
 ws.onopen=()=>{const q=wsQueue;wsQueue=[];q.forEach(s=>{try{ws.send(s);}catch{}});};
 ws.onclose=()=>{const hadRoom=!!myRoomCode;$('online-status-line').textContent='Déconnecté du serveur';$('conn-label').textContent='Déconnecté';if(hadRoom&&gameMode==='online')toast('Connexion perdue — rouvre la page ou recrée une salle',false);ws=null;};
 ws.onerror=()=>{toast('Erreur réseau — vérifie start-backend.bat',false);};
@@ -456,8 +461,8 @@ if(m.t==='resign'){showGameOver('Abandon adverse','Tu gagnes.','');toast('Advers
 if(m.t==='draw_offer'){confirmModal('Nulle proposée','Adversaire propose la nulle. Accepter ?').then(ok=>{if(ok){wsSend({t:'draw_accept'});stopClock();showGameOver('Nulle acceptée','Partie nulle','');recordResult('draw');}else wsSend({t:'draw_decline'});});}
 if(m.t==='draw_accept'){showGameOver('Nulle acceptée','Partie nulle','');toast('Nulle acceptée',true);}
 if(m.t==='draw_decline'){toast('Nulle refusée',false);}
-if(m.t==='rematch_offer'){confirmModal('Revanche ?','Adversaire demande une revanche.').then(ok=>{if(ok){wsSend({t:'rematch_accept'});startGame('online');}});}
-if(m.t==='rematch_accept'){toast('Revanche acceptée !',true);startGame('online');}
+if(m.t==='rematch_offer'){confirmModal('Revanche ?','Adversaire demande une revanche.').then(ok=>{if(ok)wsSend({t:'rematch_accept'});});}
+if(m.t==='rematch_reset'){startGame('online');if(m.time!=null)initOnlineClocks(m.time);toast('Revanche — nouvelle partie !',true);}
 if(m.t==='error'){$('online-status-line').textContent='Online: '+m.error;toast(m.error,false);}};return ws;}
 window.createRoom=function(){startGame('online');const t=parseInt(($('time-sel')||{}).value)||0;wsSend({t:'create',time:t});$('online-status-line').textContent='Connexion au serveur…';};
 window.joinRoom=function(){const c=$('join-code-input').value.trim().toUpperCase();if(!c){toast('Entre un code de salon',false);return;}startGame('online');wsSend({t:'join',code:c});$('online-status-line').textContent='Connexion à '+c+'…';};
@@ -474,7 +479,7 @@ window.toggleBlindFold=function(){blindfold=!blindfold;document.body.classList.t
 window.toggleMiniMode=function(){miniMode=!miniMode;document.body.classList.toggle('mini-mode',miniMode);const b=$('mini-btn');if(b)b.style.color=miniMode?'var(--gold)':'';};
 window.copyBoardSVG=function(){const b=chess.board(),sq=60,size=sq*8,L=['<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'">'];for(let r=0;r<8;r++)for(let f=0;f<8;f++){const ri=boardFlipped?7-r:r,fi=boardFlipped?7-f:f,light=(ri+fi)%2===0;L.push('<rect x="'+(f*sq)+'" y="'+(r*sq)+'" width="'+sq+'" height="'+sq+'" fill="'+(light?'#eee8d5':'#739556')+'"/>');const p=b[ri][fi];if(p){const s=SYM[(p.color==='w'?'w':'b')+p.type.toUpperCase()]||'';L.push('<text x="'+(f*sq+sq/2)+'" y="'+(r*sq+sq/2+2)+'" text-anchor="middle" dominant-baseline="middle" font-size="'+(sq*0.68)+'" fill="'+(p.color==='w'?'#fff':'#1a1a18')+'" font-family="serif">'+s+'</text>');}}L.push('</svg>');const svg=L.join('\n');const fl=$('copy-flash');if(fl){fl.className='copy-flash go';setTimeout(()=>fl.className='copy-flash',400);}try{navigator.clipboard.writeText(svg).then(()=>addChatMsg('Plateau copié en SVG !'));}catch{addChatMsg('Copie SVG impossible.');}};
 window.importPGN=function(){$('pgn-file-input').click();};
-window.handlePGNFile=function(e){const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const c=new Chess();if(!c.load_pgn(rd.result))throw 0;chess=c;moveAnns=[];evalHistory=[];lastMove=null;updateAll();addChatMsg('PGN importé — '+chess.history().length+' coups chargés.');}catch{addChatMsg('PGN invalide.');}};rd.readAsText(f);e.target.value='';};
+window.handlePGNFile=function(e){const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const c=new Chess();if(!c.load_pgn(rd.result))throw 0;chess=c;moveAnns=[];evalHistory=[];lastMove=null;analSeq++;resetAnalysisPane();updateAll();addChatMsg('PGN importé — '+chess.history().length+' coups chargés.');}catch{addChatMsg('PGN invalide.');}};rd.readAsText(f);e.target.value='';};
 // ---------- Mode cheat / indices (comme indices.js original, sans token en local) ----------
 function hintStatus(t){$('hint-status').textContent=t;}
 window.hintClear=function(){document.querySelectorAll('.sq').forEach(el=>{el.style.outline='';});$('hint-moves').innerHTML='';hintStatus('Prêt.');};

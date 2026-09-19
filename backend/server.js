@@ -158,7 +158,7 @@ async function main() {
       const r = rooms.get(info.code);
       if (!r) return;
       if (m.t === 'move') {
-        if (r.over) return;
+        if (r.over) return send(ws, { t: 'error', error: 'Partie terminée' });
         // tour correct ?
         if (r.chess.turn() !== info.color) return send(ws, { t: 'error', error: 'Pas votre tour' });
         try {
@@ -179,9 +179,17 @@ async function main() {
         broadcast(info.code, { t: 'resign', by: info.color }, ws);
         return;
       }
-      for (const relay of ['draw_offer', 'draw_accept', 'draw_decline', 'rematch_offer', 'rematch_accept']) {
+      if (m.t === 'rematch_accept') {
+        // Nouvelle partie : on réinitialise la salle CÔTÉ SERVEUR sinon les
+        // coups suivants seraient validés contre l'ancienne position.
+        r.chess = new Chess();
+        r.over = false;
+        broadcast(info.code, { t: 'rematch_reset', fen: r.chess.fen(), time: r.time });
+        return;
+      }
+      for (const relay of ['draw_offer', 'draw_accept', 'draw_decline', 'rematch_offer']) {
         if (m.t === relay) {
-          if (relay === 'draw_accept' || relay === 'rematch_accept') r.over = relay === 'draw_accept';
+          if (relay === 'draw_accept') r.over = true;
           broadcast(info.code, { t: relay, by: info.color }, ws);
           return;
         }
