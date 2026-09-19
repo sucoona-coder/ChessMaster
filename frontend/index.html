@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>♟ ChessMaster Pro — Stockfish 19 (doux)</title>
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+</head>
+<body>
+<!-- HOME comme l'original -->
+<div id="home-screen" class="screen active">
+  <a class="back-home" href="#" onclick="return false">← Accueil</a>
+  <div class="hero-tag"><span id="hero-dot" style="width:8px;height:8px;border-radius:50%;background:#2d6a4f;display:inline-block"></span> Stockfish 19 local · 2 instances · Gratuit</div>
+  <div class="home-logo"><h1>Chess<em>Master</em> Pro</h1><p>Jouez · Analysez · Progressez — même jeu que l'original, reconstruit proprement, moteur adouci.</p><div class="sf-badge" id="hero-engine">Connexion au backend…</div></div>
+  <div class="hero-cta"><button class="btn-hero dark" onclick="startGame('local')">Jouer maintenant</button><button class="btn-hero light" onclick="startGame('editor')">Créer une position</button></div>
+  <div class="mode-grid">
+    <div class="mode-card" onclick="startGame('local')"><div class="icon">⚔️</div><h3>2 Joueurs Local</h3><p>Jouez face à face avec analyse IA complète, minuterie et théorie des ouvertures.</p><span class="card-badge badge-sf">Local</span></div>
+    <div class="mode-card" onclick="startGame('editor')"><div class="icon">✏️</div><h3>Éditeur de Position</h3><p>Créez librement vos positions, chargez un FEN et jouez depuis n'importe quelle configuration.</p><span class="card-badge badge-edit">Nouveau</span></div>
+    <div class="mode-card" onclick="startGame('ai')"><div class="icon">🤖</div><h3>Contre Stockfish</h3><p>Affrontez le moteur adouci. 5 niveaux humains, du débutant au fort.</p><span class="card-badge badge-sf">Stockfish doux</span></div>
+    <div class="mode-card" onclick="goOnline()"><div class="icon">🌐</div><h3>Jouer en Ligne</h3><p>Invitez un ami avec un code de salon. Serveur local, sans compte.</p><span class="card-badge badge-new">En ligne</span></div>
+    </div>
+  <div class="hero-stats"><div class="hs"><div class="v" id="hs-elo">~2400</div><div class="l">Elo max doux</div></div><div class="hs"><div class="v">4</div><div class="l">Modes de jeu</div></div><div class="hs"><div class="v">×2</div><div class="l">Stockfish 19</div></div></div>
+  <div class="panel" style="max-width:640px;width:100%;z-index:1"><div class="section-label">Réglages rapides</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <label style="font-size:.78rem">Plateau <select id="board-theme-sel"><option value="classic">Classic</option><option value="ocean">Océan</option><option value="walnut">Noyer</option><option value="slate">Ardoise</option></select></label>
+      <button class="g-btn" onclick="toggleSound()" id="home-sound-btn">Son : oui</button>
+      <button class="g-btn" onclick="openShortcuts()">Raccourcis clavier</button>
+    </div></div>
+</div>
+
+<!-- LOBBY comme l'original, branché WS local -->
+<div id="online-screen" class="screen">
+  <div class="lobby-box"><h2>Jouer en Ligne</h2><p>Créez un salon ou rejoignez un ami avec son code.</p>
+    <div class="lobby-tabs"><button class="lobby-tab active" onclick="switchTab('create',this)">Créer un salon</button><button class="lobby-tab" onclick="switchTab('join',this)">Rejoindre</button></div>
+    <div id="tab-create" class="tab-content"><div class="code" id="my-room-code">—</div><p style="text-align:center;color:var(--dim);font-size:.8rem">Partagez ce code avec votre ami.</p>
+      <div style="display:flex;gap:8px;margin-top:10px"><button class="g-btn primary" style="flex:1" onclick="createRoom()">🎲 Générer un nouveau code</button><button class="g-btn" onclick="copyRoomCode()">📋 Copier</button></div></div>
+    <div id="tab-join" class="tab-content" style="display:none"><label>Code du salon</label><input id="join-code-input" placeholder="Ex: ABC123" maxlength="10" style="width:100%;margin:6px 0"><button class="g-btn primary" style="width:100%" onclick="joinRoom()">🔗 Rejoindre la partie</button></div>
+    <div id="online-status-line" class="status-line">En attente…</div>
+    <button class="g-btn" style="width:100%;margin-top:10px" onclick="showScreen('home-screen')">← Retour</button>
+  </div>
+</div>
+
+<!-- GAME comme l'original -->
+<div id="game-screen" class="screen">
+  <div class="game-topbar"><div class="topbar-logo">♟ Chess<span>Master</span></div><span id="mode-badge" class="topbar-badge badge-local">Local</span>
+    <button class="topbar-btn" onclick="undoLast()" title="Annuler (Ctrl+Z)">↩</button><button class="topbar-btn" onclick="flipBoard()" title="Retourner (F)">🔄</button>
+    <button class="topbar-btn" onclick="showSummary()" title="Bilan de partie">📊 Bilan</button><button class="topbar-btn" onclick="resetGame()" title="Nouvelle partie">↺</button>
+    <button class="topbar-btn" onclick="showScreen('home-screen')" title="Menu principal">⌂</button>
+    <div id="engine-badge">⏳ Moteur…</div>
+    <div style="position:relative"><button class="topbar-btn" id="more-btn" onclick="toggleMoreMenu()" title="Plus d'options">⋯</button>
+      <div id="more-menu" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:6px;min-width:190px;z-index:200;box-shadow:var(--shadow)">
+        <button class="more-item" onclick="exportPGN();toggleMoreMenu()">📋 Copier PGN</button>
+        <button class="more-item" onclick="downloadPGN();toggleMoreMenu()">⬇ Télécharger PGN</button>
+        <button class="more-item" onclick="importPGN();toggleMoreMenu()">⬆ Importer PGN</button>
+        <hr style="border:none;border-top:1px solid var(--border);margin:4px 0">
+        <button class="more-item" id="blindfold-btn" onclick="toggleBlindFold();toggleMoreMenu()">👁 Mode Blindfold</button>
+        <button class="more-item" onclick="copyBoardSVG();toggleMoreMenu()">📷 Copier plateau SVG</button>
+        <button class="more-item" id="mini-btn" onclick="toggleMiniMode();toggleMoreMenu()">⊡ Plateau compact</button>
+      </div></div>
+    <button class="theme-toggle" id="theme-toggle-btn" onclick="toggleTheme()" title="Thème sombre/clair">🌙</button>
+    <span class="blindfold-badge" id="blindfold-badge">BLIND</span>
+    <div class="copy-flash" id="copy-flash"></div>
+    <input type="file" id="pgn-file-input" accept=".pgn,.txt" style="display:none" onchange="handlePGNFile(event)">
+  </div>
+  <div class="game-layout">
+    <div class="left-panel">
+      <div class="panel"><div class="section-label">Ouverture théorique</div><div id="op-box" class="opening-box out-theory"><span id="op-eco" class="op-eco-badge" style="display:none"></span><div id="op-name" class="op-name">Position de départ</div><div id="op-var" class="op-var">Faites votre premier coup</div><div id="op-tip" class="op-tip" style="display:none"></div><div id="theory-next-wrap"><div class="section-label">Coups théoriques :</div><div id="theory-moves" class="theory-moves"></div></div></div></div>
+      <div class="panel"><div class="section-label">Évaluation</div><div class="eval-wrap"><div class="eval-bar-bg"><div id="eval-bar" class="eval-bar-fill"></div></div><span id="eval-num" class="eval-num">0.0</span></div><div id="depth-row" class="depth-row">Stockfish pense…<div class="depth-bar-bg"><div id="depth-bar" class="depth-bar"></div></div></div></div>
+      <div class="panel" id="explorer-panel"><div class="section-label">Opening Explorer</div><div class="explorer-name" id="explorer-name">Position de départ</div><span class="explorer-eco" id="explorer-eco" style="display:none"></span><div class="explorer-main" id="explorer-main">Jouez un coup pour explorer la théorie.</div><div class="explorer-cont" id="explorer-continuations"></div></div>
+      <div class="panel"><div class="section-label">Historique <span id="move-counter"></span></div><div id="move-history"></div><div class="nav-btns"><button class="g-btn" onclick="navGo(0)">⏮</button><button class="g-btn" onclick="navPrev()">◀</button><button class="g-btn" onclick="navNext()">▶</button><button class="g-btn" onclick="navGoEnd()">⏭</button></div></div>
+      <div class="panel"><div class="section-label">Pièces capturées</div><div>⬜ <span id="cap-white">—</span> <span id="adv-white"></span></div><div>⬛ <span id="cap-black">—</span> <span id="adv-black"></span></div></div>
+    </div>
+    <div class="center-panel">
+      <div class="player-bar"><div class="player-avatar avatar-b">♟</div><div><div id="name-black">Joueur Noir</div><div id="status-black" style="font-size:.7rem;color:var(--dim)">En attente…</div></div><div id="clock-black" class="player-clock">∞</div></div>
+      <div id="chess-board"></div><div id="opening-bar" style="display:none"><span id="ob-eco"></span> <span id="ob-name"></span></div>
+      <div class="player-bar"><div class="player-avatar avatar-w">♙</div><div><div id="name-white">Joueur Blanc</div><div id="status-white" style="font-size:.7rem;color:var(--dim)">À vous de jouer</div></div><div id="clock-white" class="player-clock">∞</div></div>
+      <div id="status-msg">Tour des Blancs — Sélectionnez une pièce</div>
+      <div class="game-btns"><button class="g-btn" onclick="undoLast()">↩ Annuler</button><button class="g-btn" onclick="flipBoard()">🔄 Retourner</button><button class="g-btn" id="clear-draw-btn" onclick="clearDrawings()" title="Effacer les flèches et surbrillances (Échap)">Effacer dessins</button><button class="g-btn primary" onclick="resetGame()">↺ Nouvelle partie</button></div>
+    </div>
+    <div class="right-panel">
+      <div class="panel" id="editor-panel" style="display:none"><div class="section-label">Éditeur</div><div id="ed-valid" class="small" style="margin-bottom:8px">—</div><div id="ed-palette" class="ed-palette"></div>
+        <div style="display:flex;gap:6px"><button class="g-btn" id="ed-turn-w" onclick="edSetTurn('w')">⬜ Blancs</button><button class="g-btn" id="ed-turn-b" onclick="edSetTurn('b')">⬛ Noirs</button></div>
+        <input id="editor-fen-input" placeholder="Ou collez un FEN…" style="width:100%;margin-top:8px" oninput="edLoadFen()">
+        <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"><button class="g-btn primary" onclick="edStartFromPosition()">▶ Jouer</button><button class="g-btn" onclick="edSetStartPos()">↺ Départ</button><button class="g-btn" onclick="edCopyFen()">📋 FEN</button><button class="g-btn" onclick="edClearBoard()">✕ Vider</button></div></div>
+      <div class="panel" id="hint-panel"><div class="section-label">💡 Indices Stockfish (triche)</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap"><button class="g-btn" onclick="hintBestMove()">Meilleur coup</button><button class="g-btn" onclick="hintTop3()">Top 3 coups</button><button class="g-btn" onclick="hintClear()">Effacer</button></div>
+        <div id="hint-status" style="font-size:.72rem;color:var(--green);margin-top:6px;font-style:italic">Prêt.</div><div id="hint-moves" style="margin-top:6px"></div></div>
+      <div class="panel"><div class="section-label">Analyse IA en direct</div><div id="analysis-card"><div id="analysis-body">Faites votre premier coup pour recevoir l'analyse IA…</div></div><div id="pv-list" style="margin-top:8px;display:flex;flex-direction:column;gap:4px"></div><canvas id="eval-graph" height="80" style="width:100%;margin-top:8px"></canvas></div>
+      <div class="panel" id="time-presets-panel"><div class="section-label">Contrôle du temps (+incrément)</div><div class="time-grid"><button class="time-btn" data-tc="bullet1" onclick="setTimeControl('bullet1')">1+0</button><button class="time-btn" data-tc="blitz3" onclick="setTimeControl('blitz3')">3+0</button><button class="time-btn" data-tc="blitz32" onclick="setTimeControl('blitz32')">3+2</button><button class="time-btn" data-tc="rapid10" onclick="setTimeControl('rapid10')">10+0</button><button class="time-btn active" data-tc="unlimited" onclick="setTimeControl('unlimited')">∞</button></div></div>
+      <div class="panel" id="online-info-card" style="display:none"><div class="section-label">En ligne</div><div id="conn-label">En attente…</div><div class="code" id="oi-room-code" style="font-size:1.2rem"></div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><button class="g-btn" onclick="offerDraw()">Nulle ?</button><button class="g-btn" onclick="askRematch()">Revanche</button><button class="g-btn" onclick="copyRoomCode()">Copier code</button></div></div>
+      <div class="panel" id="difficulty-panel" style="display:none"><div class="section-label">⚡ Niveau Stockfish doux</div><div class="diff-btns"><button class="diff-btn" onclick="setDifficulty(1)">😌 Débutant</button><button class="diff-btn" onclick="setDifficulty(2)">🙂 Facile</button><button class="diff-btn active" onclick="setDifficulty(3)">😤 Moyen</button><button class="diff-btn" onclick="setDifficulty(4)">😈 Fort</button><button class="diff-btn" onclick="setDifficulty(5)">💀 Max doux</button></div><div id="diff-desc" style="font-size:.78rem;color:var(--dim);margin-top:6px">Elo ~1600 · jouable</div><div id="engine-status" style="font-size:.75rem">⏳ Chargement…</div></div>
+      <div class="panel"><div class="section-label">Export & Partage</div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="g-btn" onclick="exportPGN()">📋 PGN</button><button class="g-btn" onclick="exportFEN()">📄 FEN</button><button class="g-btn" onclick="downloadPGN()">⬇ Fichier</button></div><input id="fen-in" style="width:100%;margin-top:8px" placeholder="FEN…"><button class="g-btn" style="margin-top:6px" onclick="loadFenBox()">Charger FEN</button></div>
+      <div class="chat-panel"><div class="section-label">Chat (<span id="chat-mode-label">Local</span>)</div><div id="chat-messages" class="chat-messages"></div><div class="chat-input-row"><input id="chat-input" placeholder="Message…" maxlength="200" style="flex:1"><button class="g-btn" onclick="sendChat()">↑</button></div></div>
+      <div style="text-align:center;color:var(--dimmer);font-size:.7rem">Stockfish 19 doux · 2 instances · Local</div>
+    </div>
+  </div>
+</div>
+
+<div id="promo-overlay" class="promo-overlay"><div class="promo-box"><h3>Promotion — choisissez</h3><div id="promo-choices" style="display:flex;gap:10px;font-size:2.4rem;margin-top:10px"></div></div></div>
+<div id="gameover-overlay" class="gameover-overlay"><div class="summary-box" style="text-align:center"><div id="go-icon" style="font-size:3rem">♛</div><h2 id="go-title">Partie terminée</h2><p id="go-sub"></p><div style="display:flex;gap:8px;justify-content:center;margin-top:12px"><button class="g-btn primary" onclick="closeGameOver();showSummary()">📊 Voir le bilan</button><button class="g-btn" onclick="closeGameOver();resetGame()">↺ Nouvelle partie</button></div></div></div>
+<div id="summary-overlay" class="summary-overlay"><div class="summary-box"><h2>Bilan de partie</h2><p id="sum-sub"></p><div class="sum-grid" id="sum-stats"></div><div id="sum-detail" style="font-size:.8rem;color:var(--text2)"></div><canvas id="summary-graph" height="100" style="width:100%;margin-top:10px"></canvas><div style="display:flex;gap:8px;margin-top:10px"><button class="g-btn" style="flex:1" onclick="downloadPGN()">Télécharger PGN</button><button class="g-btn primary" style="flex:1" onclick="closeSummary()">Fermer</button></div></div></div>
+<div id="toasts" aria-live="polite"></div>
+<div id="confirm-modal" class="modal-overlay"><div class="modal"><h2 id="confirm-title">Confirmer</h2><p id="confirm-text"></p><div style="display:flex;gap:8px"><button class="g-btn" style="flex:1" id="confirm-no">Annuler</button><button class="g-btn primary" style="flex:1" id="confirm-yes">Confirmer</button></div></div></div>
+<div id="shortcuts-modal" class="modal-overlay"><div class="modal"><h2>Raccourcis clavier</h2><div style="display:grid;grid-template-columns:auto 1fr;gap:8px;font-size:.85rem"><span><span class="kbd">←</span> <span class="kbd">→</span></span><span>Naviguer dans les coups</span><span><span class="kbd">↑</span> <span class="kbd">↓</span></span><span>Début / fin</span><span><span class="kbd">F</span></span><span>Retourner le plateau</span><span><span class="kbd">Ctrl+Z</span></span><span>Annuler un coup</span><span><span class="kbd">Clic droit + glisser</span></span><span>Dessiner une flèche (verte)</span><span><span class="kbd">Clic droit</span></span><span>Marquer / démarquer une case</span><span><span class="kbd">Maj / Ctrl / Alt</span> <span class="kbd">+ clic droit</span></span><span>Flèches dorées / rouges / cyan</span><span><span class="kbd">Échap</span></span><span>Fermer, annuler le dessin, effacer les dessins</span></div><button class="g-btn primary" style="width:100%;margin-top:12px" onclick="closeShortcuts()">Fermer</button></div></div>
+<button id="sound-fab" class="g-btn" style="position:fixed;bottom:14px;right:14px" onclick="toggleSound()">🔊</button>
+<footer>ChessMaster local — même jeu que _original, mieux construit, Stockfish adouci</footer>
+<script src="app.js"></script>
+</body>
+</html>

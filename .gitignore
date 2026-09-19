@@ -1,0 +1,27 @@
+# Dépendances (réinstallées via npm install)
+node_modules/
+backend/node_modules/
+
+# Moteurs Stockfish natifs — JAMAIS dans Git (>100 Mo).
+# Téléchargés automatiquement au premier lancement via :
+#   node scripts/download-stockfish.js
+engines/*.exe
+engines/*.zip
+engines/sf19/
+engines/sf*/
+
+# Dépôt de référence local (clone d'analyse, repo git imbriqué + doublons 10 Mo).
+# Non publié. Pour le récupérer : voir README, section Référence.
+_original/
+
+# Logs & OS
+*.log
+npm-debug.log*
+Thumbs.db
+.DS_Store
+Desktop.ini
+
+# Secrets / env local (aucun requis par le projet, par sécurité)
+.env
+.env.*
+!.env.example
