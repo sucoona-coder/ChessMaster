@@ -8,32 +8,82 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
 </head>
 <body>
-<!-- HOME comme l'original -->
+<!-- LANDING -->
 <div id="home-screen" class="screen active">
-  <a class="back-home" href="#" onclick="return false">← Accueil</a>
-  <div class="hero-tag"><span id="hero-dot" style="width:8px;height:8px;border-radius:50%;background:#2d6a4f;display:inline-block"></span> Stockfish 19 local · 2 instances · Gratuit</div>
-  <div class="home-logo"><h1>Chess<em>Master</em> Pro</h1><p>Jouez · Analysez · Progressez — même jeu que l'original, reconstruit proprement, moteur adouci.</p><div class="sf-badge" id="hero-engine">Connexion au backend…</div></div>
-  <div class="hero-cta"><button class="btn-hero dark" onclick="startGame('local')">Jouer maintenant</button><button class="btn-hero light" onclick="startGame('editor')">Créer une position</button></div>
+  <header class="land-nav">
+    <div class="land-logo"><span class="land-pawn">♟</span> Chess<em>Master</em> <span class="land-pro">Pro</span></div>
+    <nav class="land-links"><a href="#land-modes">Modes</a><a href="#land-features">Fonctionnalités</a><a href="#land-engine">Moteur</a></nav>
+    <button class="g-btn" id="settings-btn" onclick="openSettings()" title="Réglages"><span data-ic="gear"></span> Réglages</button>
+    <button class="btn-hero dark btn-sm" onclick="startGame('local')">Jouer</button>
+  </header>
+  <section class="land-hero">
+    <div class="land-hero-text">
+      <div class="hero-tag"><span class="dot"></span> 100 % local · 2 moteurs · sans compte</div>
+      <h1>Les échecs,<br><em>sublimés.</em></h1>
+      <p class="land-sub">Jouez, analysez et progressez dans une interface moderne : annotations coup par coup, dessin tactique, Opening Explorer et multijoueur local.</p>
+      <div class="hero-cta">
+        <button class="btn-hero dark" onclick="startGame('local')">Jouer maintenant</button>
+        <button class="btn-hero light" onclick="startGame('ai')">Défier Stockfish</button>
+        <button class="btn-hero light" onclick="goOnline()">Jouer en ligne</button>
+      </div>
+      <div class="sf-badge" id="hero-engine">Connexion au backend…</div>
+    </div>
+    <div class="land-hero-visual">
+      <div id="landing-board" aria-hidden="true"></div>
+      <div class="float-card fc-a"><strong>! e4</strong><span>Meilleur coup</span></div>
+      <div class="float-card fc-b"><strong>C50</strong><span>Italienne</span></div>
+      <div class="float-card fc-c"><strong>+0.4</strong><span>Évaluation</span></div>
+    </div>
+  </section>
+  <section class="land-section" id="land-modes">
+    <h2>Quatre façons de jouer</h2>
+    <p class="land-lead">Du premier coup à l'analyse grand-maître.</p>
   <div class="mode-grid">
     <div class="mode-card" onclick="startGame('local')"><div class="icon">⚔️</div><h3>2 Joueurs Local</h3><p>Jouez face à face avec analyse IA complète, minuterie et théorie des ouvertures.</p><span class="card-badge badge-sf">Local</span></div>
     <div class="mode-card" onclick="startGame('editor')"><div class="icon">✏️</div><h3>Éditeur de Position</h3><p>Créez librement vos positions, chargez un FEN et jouez depuis n'importe quelle configuration.</p><span class="card-badge badge-edit">Nouveau</span></div>
     <div class="mode-card" onclick="startGame('ai')"><div class="icon">🤖</div><h3>Contre Stockfish</h3><p>Affrontez le moteur adouci. 5 niveaux humains, du débutant au fort.</p><span class="card-badge badge-sf">Stockfish doux</span></div>
     <div class="mode-card" onclick="goOnline()"><div class="icon">🌐</div><h3>Jouer en Ligne</h3><p>Invitez un ami avec un code de salon. Serveur local, sans compte.</p><span class="card-badge badge-new">En ligne</span></div>
     </div>
-  <div class="hero-stats"><div class="hs"><div class="v" id="hs-elo">~2400</div><div class="l">Elo max doux</div></div><div class="hs"><div class="v">4</div><div class="l">Modes de jeu</div></div><div class="hs"><div class="v">×2</div><div class="l">Stockfish 19</div></div></div>
-  <div class="panel" style="max-width:640px;width:100%;z-index:1"><div class="section-label">Réglages rapides</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-      <label style="font-size:.78rem">Plateau <select id="board-theme-sel"><option value="classic">Classic</option><option value="ocean">Océan</option><option value="walnut">Noyer</option><option value="slate">Ardoise</option></select></label>
-      <button class="g-btn" onclick="toggleSound()" id="home-sound-btn">Son : oui</button>
-      <button class="g-btn" onclick="openShortcuts()">Raccourcis clavier</button>
-    </div></div>
-  <div class="feat-grid">
-    <div class="feat-card"><h3>Analyse annotée</h3><p>Chaque coup noté (! ? ??), précision live et bilan chiffré.</p></div>
-    <div class="feat-card"><h3>Dessin pro</h3><p>Flèches 4 couleurs et surbrillances au clic droit, par position.</p></div>
-    <div class="feat-card"><h3>Explorer</h3><p>Noms ECO, variantes et suites théoriques cliquables.</p></div>
-    <div class="feat-card"><h3>En ligne local</h3><p>Salles WebSocket : chat, nulle, revanche, sans compte.</p></div>
+  </section>
+  <section class="land-section" id="land-features">
+    <h2>Tout pour progresser</h2>
+    <p class="land-lead">Des outils dignes des grandes plateformes, en local.</p>
+    <div class="feat-grid6">
+      <div class="feat-card"><span class="feat-ic" data-ic="chart"></span><h3>Analyse annotée</h3><p>Chaque coup noté (! ? ??), précision live et bilan chiffré.</p></div>
+      <div class="feat-card"><span class="feat-ic" data-ic="bulb"></span><h3>Indices Stockfish</h3><p>Meilleur coup et Top 3 surlignés sur l'échiquier.</p></div>
+      <div class="feat-card"><span class="feat-ic" data-ic="pen"></span><h3>Éditeur FEN</h3><p>Composez toute position, validée en direct, jouable aussitôt.</p></div>
+      <div class="feat-card"><span class="feat-ic" data-ic="globe"></span><h3>En ligne local</h3><p>Salles WebSocket : chat, nulle, revanche, sans compte.</p></div>
+      <div class="feat-card"><span class="feat-ic" data-ic="zap"></span><h3>Dessin tactique</h3><p>Flèches 4 couleurs et surbrillances au clic droit.</p></div>
+      <div class="feat-card"><span class="feat-ic" data-ic="clock"></span><h3>Horloges pro</h3><p>Bullet, Blitz +2, Rapide, auto-flip et temps par coup.</p></div>
+    </div>
+  </section>
+  <section class="land-section" id="land-engine">
+    <div class="engine-panel">
+      <div class="engine-text">
+        <div class="hero-tag dark"><span class="dot"></span> Stockfish 19 · 2 instances</div>
+        <h2>Deux cerveaux,<br>zéro latence.</h2>
+        <p>Une instance affronte vos pièces, l'autre annote chacun de vos coups — sans jamais se bloquer mutuellement.</p>
+        <div class="small" id="engine-detail">Démarrage des moteurs…</div>
+      </div>
+      <div class="engine-levels">
+        <div class="e-row"><span>Débutant</span><div class="e-bar"><i style="width:22%"></i></div><b>~800</b></div>
+        <div class="e-row"><span>Club</span><div class="e-bar"><i style="width:48%"></i></div><b>~1600</b></div>
+        <div class="e-row"><span>Expert</span><div class="e-bar"><i style="width:66%"></i></div><b>~2000</b></div>
+        <div class="e-row"><span>Max doux</span><div class="e-bar"><i style="width:82%"></i></div><b>~2400</b></div>
+      </div>
+    </div>
+  </section>
+  <footer class="land-footer"><span>ChessMaster Local · MIT</span><span>Moteur Stockfish · GPLv3</span><button class="linklike" onclick="openSettings()">Réglages</button></footer>
+</div>
+<div id="settings-modal" class="modal-overlay">
+  <div class="modal">
+    <h2>Réglages</h2>
+    <div class="set-row"><span>Plateau</span><select id="board-theme-sel"><option value="classic">Classic</option><option value="ocean">Océan</option><option value="walnut">Noyer</option><option value="slate">Ardoise</option></select></div>
+    <div class="set-row"><span>Son</span><button class="g-btn" onclick="toggleSound();syncSettingsUI()" id="home-sound-btn">Son : oui</button></div>
+    <div class="set-row"><span>Thème</span><button class="g-btn" id="set-theme-btn" onclick="toggleTheme();syncSettingsUI()">Thème : sombre</button></div>
+    <div class="set-row"><span>Aide</span><button class="g-btn" onclick="closeSettings();openShortcuts()">Raccourcis clavier</button></div>
+    <button class="g-btn primary" style="width:100%;margin-top:12px" onclick="closeSettings()">Fermer</button>
   </div>
-  <p style="z-index:1;color:var(--hdim,#9a9a90);font-size:.75rem">100 % local · aucun compte · moteurs inclus au premier lancement</p>
 </div>
 
 <!-- LOBBY comme l'original, branché WS local -->
