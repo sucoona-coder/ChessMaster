@@ -86,12 +86,27 @@ Forcer le re-téléchargement : `node scripts\download-stockfish.js --force`
 ```
 start-all.bat / start-backend.bat / stop-all.bat
 scripts/download-stockfish.js   # téléchargement auto Stockfish 19
+scripts/split-frontend.js       # (maintenance) découpe app.js en modules
 backend/server.js               # Express + WS + API
 backend/engines.js              # pilote UCI des 2 instances
+backend/smoke.test.mjs          # tests (npm test) : binaires, règles, UCI
 backend/package.json
-frontend/index.html | styles.css | app.js
+frontend/index.html | styles.css
+frontend/js/pieces.js           # pièces SVG + symboles
+frontend/js/annotations.js      # annotations (données)
+frontend/js/data-*.js           # niveaux IA, ouvertures ECO, horloges
+frontend/js/icons.js            # icônes SVG
+frontend/js/app.js              # logique (même IIFE, sans build)
 engines/                        # binaires locaux (non versionnés)
 ```
+
+## Tests
+
+```bat
+cd backend && npm test
+```
+Vérifie les binaires, les règles (roque, en passant, promotion) et un
+vrai handshake UCI + meilleur coup sur les 2 instances (~15 s).
 
 ## Référence d'origine
 

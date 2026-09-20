@@ -1,0 +1,22 @@
+/* ChessMaster — ouvertures ECO (constantes pures, sans dépendance) */
+const OPENINGS=[
+{m:'e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O',eco:'C80',n:'Ouverture Espagnole',v:'Variante Ouverte'},
+{m:'e4 e5 Nf3 Nc6 Bb5',eco:'C60',n:'Ouverture Espagnole',v:'Ruy Lopez'},
+{m:'e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 a6',eco:'B90',n:'Défense Sicilienne',v:'Najdorf'},
+{m:'e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 g6',eco:'B70',n:'Défense Sicilienne',v:'Dragon'},
+{m:'e4 c5',eco:'B20',n:'Défense Sicilienne',v:''},
+{m:'e4 e6 d4 d5',eco:'C01',n:'Défense Française',v:''},
+{m:'e4 e6',eco:'C00',n:'Défense Française',v:''},
+{m:'e4 c6',eco:'B10',n:'Défense Caro-Kann',v:''},
+{m:'d4 d5 c4',eco:'D06',n:'Gambit Dame',v:''},
+{m:'d4 Nf6 c4 e6 Nc3 Bb4',eco:'E20',n:'Défense Nimzo-Indienne',v:''},
+{m:'e4 e5 Nf3 Nc6 Bc4 Bc5',eco:'C50',n:'Ouverture Italienne',v:'Giuoco Piano'},
+{m:'e4 e5 Nf3 Nc6 d4 exd4',eco:'C44',n:'Partie Écossaise',v:''},
+{m:'e4 d5',eco:'B01',n:'Défense Scandinave',v:''},
+{m:'e4',eco:'B00',n:'Ouverture du Roi',v:'1.e4'},
+{m:'d4 d5',eco:'D00',n:'Partie de Dame',v:''},
+{m:'d4 Nf6',eco:'A45',n:'Défense Indienne',v:''},
+{m:'d4',eco:'A40',n:'Ouverture de la Dame',v:'1.d4'},
+{m:'c4',eco:'A10',n:'Ouverture Anglaise',v:''},
+{m:'Nf3',eco:'A04',n:'Ouverture Réti',v:''},
+{m:'e4 e5',eco:'C20',n:'Partie Ouverte',v:'1.e4 e5'}];

@@ -56,7 +56,8 @@ body[data-board="slate"]{--sq-light:#e8e8e8;--sq-dark:#5a6268}
 .pv-line{display:flex;gap:8px;align-items:baseline;font-size:.78rem;padding:5px 8px;border-radius:8px;cursor:pointer;border:1px solid transparent}
 .pv-line:hover{background:var(--bg3);border-color:var(--border)}
 .pv-line .pv-score{font-weight:800;min-width:52px;text-align:right;font-variant-numeric:tabular-nums}
-.pv-line .pv-moves{color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pv-line .pv-moves{color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
+.pv-line .pop{font-size:.65rem;color:var(--dim);border:1px solid var(--border);border-radius:6px;padding:0 6px;white-space:nowrap}
 /* Drag & drop + animations */
 #chess-board{position:relative;touch-action:none;user-select:none;-webkit-user-select:none}
 #chess-board .sq{transition:box-shadow .12s ease,background-color .12s ease}
@@ -127,6 +128,12 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 .mode-card{background:#fff;border:1px solid var(--hborder);border-radius:12px;padding:22px 20px;cursor:pointer;transition:all .22s}
 .mode-card:hover{border-color:var(--haccent);transform:translateY(-2px);box-shadow:0 16px 40px rgba(0,0,0,.09)}
 .mode-card .icon{font-size:1.9rem}.mode-card h3{font-family:'Fraunces',serif;font-size:1.05rem;color:var(--hink)}.mode-card p{font-size:.79rem;color:var(--htext2)}
+.feat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-width:900px;width:100%;z-index:1}
+.feat-card{background:#fff;border:1px solid var(--hborder);border-radius:12px;padding:16px 14px}
+.feat-card h3{font-family:'Fraunces',serif;font-size:.95rem;color:var(--hink);margin-bottom:4px}
+.feat-card p{font-size:.75rem;color:var(--htext2);line-height:1.5}
+@media(max-width:900px){.feat-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.feat-grid{grid-template-columns:1fr}.mode-grid{grid-template-columns:1fr}}
 .card-badge{display:inline-block;font-size:.58rem;font-weight:700;letter-spacing:.1em;padding:3px 9px;border-radius:100px;text-transform:uppercase;margin-top:4px}
 .badge-new,.badge-ai{background:rgba(45,106,79,.08);color:var(--haccent);border:1px solid rgba(45,106,79,.2)}
 .badge-sf{background:rgba(160,120,48,.08);color:var(--hgold);border:1px solid rgba(160,120,48,.2)}
